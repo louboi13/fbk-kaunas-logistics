@@ -1,0 +1,23 @@
+name: Production upgrade
+on:
+  push:
+    branches: [main]
+jobs:
+  upgrade:
+    if: github.event.head_commit.message != 'Apply production upgrade'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/production_upgrade.py
+      - run: |
+          if git diff --quiet; then echo 'No upgrade changes needed'; exit 0; fi
+          git config user.name 'FBK Production Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add src/main.jsx
+          git commit -m 'Apply production upgrade'
+          git push
